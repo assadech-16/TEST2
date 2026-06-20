@@ -1,0 +1,121 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>NEXTSTEP - ค้นหาตัวเอง</title>
+    
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.39.3/dist/umd/supabase.min.js"></script>
+    
+    <style>
+        :root { --primary: #1e3a8a; --accent: #3b82f6; --bg: #f8fafc; --card: #ffffff; --border: #e2e8f0; --text-main: #0f172a; }
+        body { font-family: 'Segoe UI', sans-serif; background-color: var(--bg); color: var(--text-main); margin: 0; padding: 20px; }
+        .profile-container { max-width: 700px; margin: 40px auto; background: var(--card); padding: 40px; border-radius: 16px; border: 1px solid var(--border); box-shadow: 0 10px 25px -5px rgba(0,0,0,0.05); }
+        h2 { color: var(--primary); text-align: center; margin-bottom: 30px; }
+        .form-group { display: flex; flex-direction: column; gap: 8px; margin-bottom: 20px; }
+        .form-control { padding: 12px; border: 1px solid var(--border); border-radius: 10px; font-size: 15px; }
+        .checkbox-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 12px; }
+        .checkbox-item { background: #f1f5f9; padding: 12px; border-radius: 8px; border: 1px solid var(--border); cursor: pointer; transition: 0.2s; }
+        .checkbox-item:hover { border-color: var(--accent); background: #eff6ff; }
+        .btn-primary { background: var(--primary); color: white; padding: 15px; border: none; border-radius: 12px; font-size: 1.1rem; font-weight: 700; cursor: pointer; width: 100%; margin-top: 20px; transition: 0.2s;}
+        .btn-primary:hover:not(:disabled) { background: var(--accent); }
+        .btn-primary:disabled { background: #94a3b8; cursor: not-allowed; }
+    </style>
+</head>
+<body>
+
+<div class="profile-container">
+    <h2>📝 ข้อมูลและการประเมินทักษะ</h2>
+    
+    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px;">
+        <div class="form-group"><input type="text" id="firstName" class="form-control" placeholder="ชื่อจริง"></div>
+        <div class="form-group"><input type="text" id="lastName" class="form-control" placeholder="นามสกุล"></div>
+    </div>
+    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px;">
+        <div class="form-group"><input type="text" id="eduLevel" class="form-control" placeholder="ระดับชั้น (เช่น ม.5)"></div>
+        <div class="form-group"><input type="text" id="gpax" class="form-control" placeholder="เกรดเฉลี่ย GPAX (เช่น 3.75)"></div>
+    </div>
+    <div class="form-group"><input type="text" id="schoolName" class="form-control" placeholder="ชื่อโรงเรียน"></div>
+    
+    <div class="form-group">
+        <label style="font-weight: bold; color: var(--primary); margin-bottom: 5px;">🛠️ ทักษะเด่นของคุณ (เลือกได้หลายข้อ)</label>
+        <div class="checkbox-grid" id="skillsGrid"></div>
+    </div>
+    
+    <button id="btnSaveProfile" class="btn-primary">ดูผลการวิเคราะห์ Career Path 🚀</button>
+</div>
+
+<script>
+    const SUPABASE_URL = 'https://gegxhtqvkmarqznplbsw.supabase.co';
+    const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImdlZ3hodHF2a21hcnF6bnBsYnN3Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODE2NzI4MTUsImV4cCI6MjA5NzI0ODgxNX0.HxHkmbLib78POSTq_5BfMNu_1y6TcnX0vvLYTfaFdPM';
+    
+    let supabaseClient;
+    let currentUser = null;
+    const sampleSkills = ['คณิตศาสตร์', 'ตรรกะ/คอมพิวเตอร์', 'วาดภาพ/กราฟิก', 'การสื่อสาร/พูด', 'คิดวิเคราะห์', 'ภาษาอังกฤษ', 'ทดลองวิทยาศาสตร์'];
+
+    document.addEventListener('DOMContentLoaded', () => {
+        supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+        init();
+    });
+
+    async function init() {
+        try {
+            const { data: { user } } = await supabaseClient.auth.getUser();
+            if(!user) return window.location.href = 'auth_profile.html';
+            currentUser = user;
+            
+            const skillGrid = document.getElementById('skillsGrid');
+            sampleSkills.forEach(item => {
+                skillGrid.innerHTML += `<label class="checkbox-item"><input type="checkbox" name="skill" value="${item}"> ${item}</label>`;
+            });
+        } catch (error) {
+            console.error("Auth Init Error:", error);
+        }
+    }
+
+    document.getElementById('btnSaveProfile').addEventListener('click', async () => {
+        const btn = document.getElementById('btnSaveProfile');
+        
+        try {
+            btn.innerText = 'กำลังประมวลผลข้อมูล... ⏳';
+            btn.disabled = true;
+
+            const skills = Array.from(document.querySelectorAll('input[name="skill"]:checked')).map(el => el.value);
+            if(skills.length === 0) {
+                btn.innerText = 'ดูผลการวิเคราะห์ Career Path 🚀';
+                btn.disabled = false;
+                return alert('⚠️ กรุณาเลือกทักษะอย่างน้อย 1 ข้อครับ!');
+            }
+
+            // 1. บันทึกข้อมูลโปรไฟล์ลงตาราง users_profile ให้ครบถ้วน
+            const { error: profErr } = await supabaseClient.from('users_profile').upsert({
+                id: currentUser.id, 
+                first_name: document.getElementById('firstName').value || 'User',
+                last_name: document.getElementById('lastName').value || '-',
+                education_level: document.getElementById('eduLevel').value || '-',
+                school_name: document.getElementById('schoolName').value || '-',
+                gpa: parseFloat(document.getElementById('gpax').value) || 0
+            });
+            if (profErr) throw new Error('บันทึกโปรไฟล์ล้มเหลว: ' + profErr.message);
+
+            // 2. บันทึกข้อมูล Preferences
+            await supabaseClient.from('user_preferences').delete().eq('user_id', currentUser.id);
+            const { error: prefErr } = await supabaseClient.from('user_preferences').insert([{ 
+                user_id: currentUser.id, 
+                skills: skills,
+                interests: []
+            }]);
+            if (prefErr) throw new Error('บันทึกทักษะล้มเหลว: ' + prefErr.message);
+            
+            window.location.href = 'dashboard.html';
+
+        } catch (err) {
+            console.error(err);
+            alert("❌ ระบบขัดข้อง: " + err.message);
+            btn.innerText = 'ดูผลการวิเคราะห์ Career Path 🚀';
+            btn.disabled = false;
+        }
+    });
+</script>
+</body>
+</html>

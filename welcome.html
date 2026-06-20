@@ -1,0 +1,139 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>NEXTSTEP - เลือกเส้นทางของคุณ</title>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <style>
+        :root {
+            --primary: #1e3a8a; --primary-light: #eff6ff; --accent: #3b82f6; 
+            --success: #10b981; --warning: #f59e0b;
+            --bg: #f8fafc; --card: #ffffff; --border: #e2e8f0; 
+            --text-main: #0f172a; --text-muted: #475569;
+        }
+
+        body { 
+            font-family: 'Segoe UI', sans-serif; 
+            background: linear-gradient(135deg, #f1f5f9 0%, #e2e8f0 100%); 
+            color: var(--text-main); 
+            margin: 0; 
+            display: flex; 
+            flex-direction: column; 
+            align-items: center; 
+            justify-content: center; 
+            min-height: 100vh;
+        }
+
+        .header-section { text-align: center; margin-bottom: 40px; }
+        .header-section h1 { color: var(--primary); font-size: 2.8rem; margin: 0 0 10px 0; }
+        .header-section p { color: var(--text-muted); font-size: 1.2rem; margin: 0; }
+
+        .path-container {
+            display: flex;
+            gap: 30px;
+            max-width: 900px;
+            padding: 0 20px;
+            flex-wrap: wrap;
+            justify-content: center;
+        }
+
+        /* 💡 ดีไซน์การ์ด 2 เส้นทาง */
+        .path-card {
+            background: var(--card);
+            border: 2px solid transparent;
+            border-radius: 24px;
+            padding: 40px 30px;
+            width: 320px;
+            text-align: center;
+            cursor: pointer;
+            box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.05);
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .path-card:hover {
+            transform: translateY(-10px);
+            border-color: var(--accent);
+            box-shadow: 0 20px 30px -10px rgba(59, 130, 246, 0.2);
+        }
+
+        .path-icon { font-size: 4rem; margin-bottom: 20px; }
+        .path-title { font-size: 1.5rem; font-weight: 700; color: var(--text-main); margin-bottom: 15px; }
+        .path-desc { color: var(--text-muted); font-size: 1rem; line-height: 1.6; margin-bottom: 25px; }
+        
+        .btn-path {
+            background: var(--primary-light);
+            color: var(--primary);
+            border: none;
+            padding: 12px 24px;
+            border-radius: 12px;
+            font-size: 1rem;
+            font-weight: 700;
+            width: 100%;
+            transition: 0.2s;
+        }
+
+        .path-card:hover .btn-path { background: var(--primary); color: white; }
+
+        /* Badge ตกแต่ง */
+        .badge-hot {
+            position: absolute; top: 20px; right: 20px;
+            background: #fee2e2; color: #ef4444;
+            padding: 5px 12px; border-radius: 20px;
+            font-size: 0.8rem; font-weight: 700;
+        }
+    </style>
+</head>
+<body>
+
+    <div class="header-section">
+        <h1>ยินดีต้อนรับสู่ NEXTSTEP 🎯</h1>
+        <p>เลือกเส้นทางที่ใช่ เพื่อก้าวสู่อนาคตในแบบของคุณ</p>
+    </div>
+
+    <div class="path-container">
+        <div class="path-card" onclick="selectPath('fast-track')">
+            <span class="badge-hot">🔥 ข้อมูล 4,900+ หลักสูตร</span>
+            <div class="path-icon">🚀</div>
+            <div class="path-title">มีเป้าหมายแล้ว</div>
+            <div class="path-desc">รู้แล้วว่าอยากเรียนอะไร<br>พร้อมลุยค้นหาข้อมูลมหาวิทยาลัย ค่าเทอม และดู Roadmap การเตรียมตัว</div>
+            <button class="btn-path">ลุยเลย!</button>
+        </div>
+
+        <div class="path-card" onclick="selectPath('discovery')">
+            <div class="path-icon">🧭</div>
+            <div class="path-title">ค้นหาตัวเอง</div>
+            <div class="path-desc">ยังลังเล ไม่แน่ใจ<br>ให้ระบบ AI ช่วยวิเคราะห์ทักษะและแนะนำอาชีพผ่าน Graph Structure</div>
+            <button class="btn-path">เริ่มค้นหา</button>
+        </div>
+    </div>
+
+<script>
+    const SUPABASE_URL = 'https://gegxhtqvkmarqznplbsw.supabase.co';
+    const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImdlZ3hodHF2a21hcnF6bnBsYnN3Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODE2NzI4MTUsImV4cCI6MjA5NzI0ODgxNX0.HxHkmbLib78POSTq_5BfMNu_1y6TcnX0vvLYTfaFdPM';
+    const _supabase = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
+    // เช็ก Auth ก่อนว่าล็อกอินมาแล้วจริงๆ ใช่ไหม
+    async function checkAuth() {
+        const { data: { user } } = await _supabase.auth.getUser();
+        if (!user) {
+            window.location.href = 'auth_profile.html'; // ถ้าแอบเข้ามา ให้เด้งกลับไปล็อกอิน
+        }
+    }
+
+    // ฟังก์ชันจัดการการคลิกเลือกเส้นทาง
+   function selectPath(pathType) {
+        if (pathType === 'fast-track') {
+            window.location.href = 'index.html'; 
+        } else if (pathType === 'discovery') {
+            // 💡 เปลี่ยนจาก dashboard.html เป็น skills.html
+            window.location.href = 'skills.html'; 
+        }
+    }
+    checkAuth();
+</script>
+
+</body>
+</html>

@@ -1,0 +1,430 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>NEXTSTEP - TCAS Requirement Roadmap</title>
+    
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    
+    <style>
+        :root {
+            --primary: #db2777;
+            --primary-light: #ffe4e6;
+            --text-main: #1e293b;
+            --text-muted: #64748b;
+            --bg-page: #f8fafc;
+            --border-color: #e2e8f0;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: var(--bg-page);
+            color: var(--text-main);
+            margin: 0;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+            background: #ffffff;
+            padding: 25px;
+            border-radius: 16px;
+            box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1);
+        }
+
+        h2 {
+            margin-top: 0;
+            color: #0f172a;
+            font-size: 24px;
+        }
+
+        .info-header {
+            background: #f1f5f9;
+            padding: 15px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+        }
+
+        .tabs {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 20px;
+            border-bottom: 2px solid var(--border-color);
+            padding-bottom: 10px;
+        }
+
+        .tab-btn {
+            flex: 1;
+            padding: 12px;
+            border: none;
+            background: #e2e8f0;
+            color: var(--text-main);
+            font-weight: bold;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            font-size: 15px;
+        }
+
+        .tab-btn.active {
+            background: var(--primary);
+            color: #ffffff; 
+            box-shadow: 0 4px 6px -1px rgba(219, 39, 119, 0.2);
+        }
+
+        .tcas-card {
+            background: #ffffff;
+            border: 1px solid var(--border-color);
+            border-radius: 10px;
+            margin-bottom: 14px;
+            overflow: hidden;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.01);
+            transition: border-color 0.2s;
+        }
+
+        .tcas-card[open] {
+            border-color: var(--primary);
+        }
+
+        .tcas-card summary {
+            background: #fff8fa; 
+            padding: 16px 20px;
+            font-weight: bold;
+            cursor: pointer;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            list-style: none;
+            user-select: none;
+        }
+
+        .tcas-card summary::-webkit-details-marker {
+            display: none;
+        }
+
+        .tcas-card summary .toggle-icon {
+            transition: transform 0.2s;
+            color: var(--text-muted);
+        }
+
+        .tcas-card[open] summary .toggle-icon {
+            transform: rotate(180deg);
+            color: var(--primary);
+        }
+
+        .card-content {
+            padding: 20px;
+            border-top: 1px solid var(--border-color);
+            background: #ffffff;
+        }
+
+        .badge-container {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+            margin-bottom: 18px;
+        }
+
+        .badge {
+            padding: 6px 12px;
+            border-radius: 999px;
+            font-size: 13px;
+            font-weight: 500;
+        }
+
+        .badge.pass {
+            background-color: #dcfce7;
+            color: #166534;
+        }
+
+        .badge.fail {
+            background-color: #fee2e2;
+            color: #991b1b;
+        }
+
+        .score-section h4 {
+            margin: 0 0 10px 0;
+            color: #334155;
+        }
+
+        .score-row {
+            margin-bottom: 14px;
+        }
+
+        .score-info {
+            display: flex;
+            justify-content: space-between;
+            font-size: 14px;
+            margin-bottom: 4px;
+        }
+
+        .progress-bg {
+            background: var(--primary-light);
+            border-radius: 999px;
+            height: 12px;
+            width: 100%;
+        }
+
+        .progress-fill {
+            background: var(--primary);
+            height: 100%;
+            border-radius: 999px;
+            width: 0%; 
+            transition: width 0.6s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        .link-btn {
+            display: inline-block;
+            margin-top: 15px;
+            color: #0284c7;
+            text-decoration: none;
+            font-size: 14px;
+            font-weight: bold;
+        }
+
+        .link-btn:hover {
+            text-decoration: underline;
+        }
+
+        .loading-text {
+            text-align: center;
+            color: var(--text-muted);
+            padding: 20px;
+            font-style: italic;
+        }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <div class="info-header">
+        <h2 id="program-title">กำลังโหลดข้อมูลหลักสูตร...</h2>
+        <p id="university-title" style="margin: 5px 0 0 0; color: var(--text-muted);"></p>
+    </div>
+
+    <div class="tabs">
+        <button class="tab-btn active" onclick="switchRound('1')">รอบ 1 Portfolio</button>
+        <button class="tab-btn" onclick="switchRound('2')">รอบ 2 Quota</button>
+        <button class="tab-btn" onclick="switchRound('3')">รอบ 3 Admission</button>
+    </div>
+
+    <div id="cards-container">
+        <div class="loading-text">กำลังเชื่อมต่อฐานข้อมูล Supabase...</div>
+    </div>
+</div>
+
+<script>
+    const SUPABASE_URL = "https://gegxhtqvkmarqznplbsw.supabase.co";
+    const SUPABASE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImdlZ3hodHF2a21hcnF6bnBsYnN3Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODE2NzI4MTUsImV4cCI6MjA5NzI0ODgxNX0.HxHkmbLib78POSTq_5BfMNu_1y6TcnX0vvLYTfaFdPM";
+    const _supabase = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+
+    let globalProgramData = null; 
+    let currentRound = '1';       
+
+    function getProgramIdFromURL() {
+        const urlParams = new URLSearchParams(window.location.search);
+        return urlParams.get('id') || '1002010990101a'; 
+    }
+
+    async function loadProgramData() {
+        let programId = getProgramIdFromURL();
+        
+        try {
+            const { data, error } = await _supabase
+                .from('programs')
+                .select(`
+                    *,
+                    universities (
+                        name_th
+                    )
+                `)
+                .eq('id', programId)
+                .single();
+
+            if (error) throw error;
+
+            globalProgramData = data;
+            console.log("🔍 ตรวจสอบโครงสร้างเชื่อมตารางสำเร็จ:", data);
+            
+            let extractedProgramName = data.program_name_th || data.name_th || data.program_name || data.name || data.major_name;
+            
+            if (!extractedProgramName && data.raw_json && data.raw_json.length > 0) {
+                extractedProgramName = data.raw_json[0].program_name_th || data.raw_json[0].project_name_th;
+            }
+            
+            if (!extractedProgramName) {
+                extractedProgramName = 'ไม่ระบุชื่อหลักสูตร';
+            }
+            
+            let extractedUniName = 'ไม่ระบุชื่อมหาวิทยาลัย';
+            if (data.universities && data.universities.name_th) {
+                extractedUniName = data.universities.name_th;
+            } else {
+                extractedUniName = data.university_name_th || data.university_name || data.university || 'ไม่ระบุชื่อมหาวิทยาลัย';
+            }
+
+            document.getElementById('program-title').innerText = extractedProgramName;
+            document.getElementById('university-title').innerText = extractedUniName;
+
+            renderRoundCards(currentRound);
+
+        } catch (err) {
+            console.error("Error loading data:", err);
+            document.getElementById('cards-container').innerHTML = `<div class="loading-text" style="color:red;">❌ ไม่สามารถดึงข้อมูลได้: ${err.message}</div>`;
+        }
+    }
+
+    function switchRound(roundNumber) {
+        currentRound = roundNumber;
+        
+        const buttons = document.querySelectorAll('.tab-btn');
+        buttons.forEach((btn, index) => {
+            if ((index + 1).toString() === roundNumber) {
+                btn.classList.add('active');
+            } else {
+                btn.classList.remove('active');
+            }
+        });
+
+        renderRoundCards(roundNumber);
+    }
+
+    function renderRoundCards(round) {
+        const container = document.getElementById('cards-container');
+        container.innerHTML = ''; 
+
+        if (!globalProgramData || !globalProgramData.raw_json) {
+            container.innerHTML = '<div class="loading-text">⚠️ ยังไม่มีประกาศเกณฑ์ที่เป็นทางการในรอบนี้ หรือมหาวิทยาลัยยังไม่อัปเดตข้อมูล</div>';
+            return;
+        }
+
+        const allProjects = globalProgramData.raw_json;
+        const filtered = allProjects.filter(p => p.type.startsWith(`${round}_`));
+
+        if (filtered.length === 0) {
+            container.innerHTML = '<div class="loading-text">⚠️ คณะนี้ไม่มีการเปิดรับสมัครในรอบนี้</div>';
+            return;
+        }
+
+        filtered.forEach((proj, idx) => {
+            
+            const badgFormal = proj.only_formal === 1 ? '<span class="badge pass">✅ แกนกลาง</span>' : '<span class="badge fail">❌ แกนกลาง</span>';
+            const badgVoc = proj.only_vocational === 1 ? '<span class="badge pass">✅ อาชีวะ</span>' : '<span class="badge fail">❌ อาชีวะ</span>';
+            const badgNonFormal = proj.only_non_formal === 1 ? '<span class="badge pass">✅ กศน.</span>' : '<span class="badge fail">❌ กศน.</span>';
+            const badgGed = proj.only_ged === 1 ? '<span class="badge pass">✅ GED</span>' : '<span class="badge fail">❌ GED</span>';
+
+            let scoresHTML = '';
+            let scoreData = proj.scores || proj.score_conditions || {};
+
+            if (Object.keys(scoreData).length > 0) {
+                Object.keys(scoreData).forEach(key => {
+                    const value = scoreData[key];
+                    scoresHTML += `
+                        <div class="score-row">
+                            <div class="score-info">
+                                <span>🎯 คะแนน${translateScoreName(key)}</span>
+                                <strong>${value}%</strong>
+                            </div>
+                            <div class="progress-bg">
+                                <div class="progress-fill" data-percent="${value}"></div>
+                            </div>
+                        </div>
+                    `;
+                });
+            } else {
+                scoresHTML = '<p style="color: var(--text-muted); font-size:14px; margin:0;">- ใช้เกณฑ์คุณสมบัติผ่าน/ไม่ผ่าน หรือรอประกาศสัดส่วนทางการ -</p>';
+            }
+
+            // 🛡️ อัปเกรดตาข่ายสกัด URL ลิงก์ระเบียบการให้ครอบคลุมทุกคีย์ข้อมูลที่อาจจะลากมา
+            const targetLink = proj.link || proj.url || proj.pdf_url || proj.document_url || globalProgramData.document_url || '#';
+            
+            // เช็คว่าถ้ามีลิงก์จริง (ที่ไม่ใช่ #) ให้แสดงผลปุ่มลิงก์ระเบียบการฉบับเต็ม
+            let linkButtonHTML = '';
+            if (targetLink && targetLink !== '#') {
+                linkButtonHTML = `<a href="${targetLink}" target="_blank" class="link-btn">🔗 เปิดดูประกาศระเบียบการฉบับเต็มของมหาลัย ↗️</a>`;
+            }
+
+            const cardId = `card-${idx}`;
+            const cardHTML = `
+                <details class="tcas-card" id="${cardId}">
+                    <summary onclick="setTimeout(triggerBars, 50)">
+                        <span>🟨 ${proj.project_name_th || 'โครงการทั่วไป'}</span>
+                        <div style="display:flex; align-items:center; gap:10px;">
+                            <span style="font-size:14px; color:#475569;">รับ <strong style="color:var(--primary); font-size:16px;">${proj.receive_student_number || 0}</strong> คน</span>
+                            <span class="toggle-icon">▼</span>
+                        </div>
+                    </summary>
+                    <div class="card-content">
+                        <h4 style="margin:0 0 8px 0; color:#334155; font-size:15px;">📋 วุฒิการศึกษาที่รับสมัคร</h4>
+                        <div class="badge-container">
+                            ${badgFormal}
+                            ${badgVoc}
+                            ${badgNonFormal}
+                            ${badgGed}
+                        </div>
+                        
+                        <div class="score-section">
+                            <h4>📊 สัดส่วนเกณฑ์คะแนนที่ใช้คัดเลือก</h4>
+                            ${scoresHTML}
+                        </div>
+
+                        ${linkButtonHTML}
+                    </div>
+                </details>
+            `;
+            container.innerHTML += cardHTML;
+        });
+
+        setTimeout(triggerBars, 100);
+    }
+
+    function triggerBars() {
+        const bars = document.querySelectorAll('.progress-fill');
+        bars.forEach(bar => {
+            const percent = bar.getAttribute('data-percent');
+            bar.style.width = percent + '%';
+        });
+    }
+
+    function translateScoreName(key) {
+        const dict = {
+            'portfolio': 'แฟ้มสะสมผลงาน (Portfolio)',
+            'interview': 'การสอบสัมภาษณ์',
+            'gpax': 'เกรดเฉลี่ยสะสม (GPAX)',
+            'tgat': 'TGAT ความถนัดทั่วไป',
+            'tgat1': 'TGAT1 การสื่อสารภาษาอังกฤษ',
+            'tgat2': 'TGAT2 การคิดอย่างมีเหตุผล',
+            'tgat3': 'TGAT3 สมรรถนะการทำงาน',
+            'tpat1': 'TPAT1 วิชาชีพแพทย์ (กสพท)',
+            'tpat2': 'TPAT2 ศิลปกรรมศาสตร์',
+            'tpat3': 'TPAT3 วิทยาศาสตร์ เทคโนโลยี วิศวกรรมศาสตร์',
+            'tpat4': 'TPAT4 สถาปัตยกรรมศาสตร์',
+            'tpat5': 'TPAT5 ครุศาสตร์-ศึกษาศาสตร์',
+            
+            'a_lv_61': 'A-Level คณิตศาสตร์ประยุกต์ 1',
+            'a_lv_62': 'A-Level คณิตศาสตร์ประยุกต์ 2',
+            'a_lv_63': 'A-Level วิทยาศาสตร์ประยุกต์',
+            'a_lv_64': 'A-Level ฟิสิกส์',
+            'a_lv_65': 'A-Level เคมี',
+            'a_lv_66': 'A-Level ชีววิทยา',
+            'a_lv_70': 'A-Level สังคมศึกษา',
+            'a_lv_81': 'A-Level ภาษาไทย',
+            'a_lv_82': 'A-Level ภาษาอังกฤษ',
+            'a_lv_83': 'A-Level ภาษาฝรั่งเศส',
+            'a_lv_84': 'A-Level ภาษาเยอรมัน',
+            'a_lv_85': 'A-Level ภาษาญี่ปุ่น',
+            'a_lv_86': 'A-Level ภาษาเกาหลี',
+            'a_lv_87': 'A-Level ภาษาจีน',
+            'a_lv_88': 'A-Level ภาษาบาลี',
+            'a_lv_89': 'A-Level ภาษาสเปน'
+        };
+        return dict[key.toLowerCase()] || key;
+    }
+
+    window.onload = loadProgramData;
+</script>
+
+</body>
+</html>

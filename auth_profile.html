@@ -1,0 +1,62 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>NEXTSTEP - เข้าสู่ระบบ</title>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <style>
+        :root { --primary: #1e3a8a; --accent: #3b82f6; --bg: #f1f5f9; --card: #ffffff; --border: #e2e8f0; --text-main: #0f172a; }
+        body { font-family: 'Segoe UI', sans-serif; background-color: var(--bg); color: var(--text-main); margin: 0; padding: 20px; }
+        .auth-container { max-width: 400px; margin: 100px auto; background: var(--card); padding: 40px; border-radius: 16px; border: 1px solid var(--border); box-shadow: 0 10px 25px -5px rgba(0,0,0,0.05); }
+        h2 { color: var(--primary); margin-top: 0; text-align: center; margin-bottom: 30px;}
+        .form-group { display: flex; flex-direction: column; gap: 8px; margin-bottom: 20px; }
+        .form-control { padding: 12px; border: 1px solid var(--border); border-radius: 10px; font-size: 15px; }
+        .btn-primary { background: var(--primary); color: white; padding: 12px; border: none; border-radius: 10px; font-size: 16px; font-weight: 700; cursor: pointer; width: 100%; transition: 0.2s;}
+        .btn-primary:hover { background: var(--accent); }
+        .toggle-link { text-align: center; margin-top: 20px; color: var(--accent); cursor: pointer; font-size: 0.95rem; font-weight: 600;}
+    </style>
+</head>
+<body>
+<div class="auth-container">
+    <h2 id="authTitle">🎯 เข้าสู่ระบบ NEXTSTEP</h2>
+    <div class="form-group"><input type="email" id="authEmail" class="form-control" placeholder="อีเมล"></div>
+    <div class="form-group"><input type="password" id="authPassword" class="form-control" placeholder="รหัสผ่าน"></div>
+    <button id="btnAuth" class="btn-primary">เข้าสู่ระบบ</button>
+    <div id="toggleAuth" class="toggle-link">ยังไม่มีบัญชี? สมัครสมาชิกที่นี่</div>
+</div>
+
+<script>
+    const SUPABASE_URL = 'https://gegxhtqvkmarqznplbsw.supabase.co';
+    const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImdlZ3hodHF2a21hcnF6bnBsYnN3Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODE2NzI4MTUsImV4cCI6MjA5NzI0ODgxNX0.HxHkmbLib78POSTq_5BfMNu_1y6TcnX0vvLYTfaFdPM';
+    const _supabase = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
+    let isSignUpMode = false;
+    document.getElementById('toggleAuth').addEventListener('click', () => {
+        isSignUpMode = !isSignUpMode;
+        document.getElementById('authTitle').innerText = isSignUpMode ? '📝 สมัครสมาชิก' : '🎯 เข้าสู่ระบบ';
+        document.getElementById('btnAuth').innerText = isSignUpMode ? 'สมัครสมาชิก' : 'เข้าสู่ระบบ';
+        document.getElementById('toggleAuth').innerText = isSignUpMode ? 'มีบัญชีอยู่แล้ว? เข้าสู่ระบบ' : 'ยังไม่มีบัญชี? สมัครสมาชิกที่นี่';
+    });
+
+    document.getElementById('btnAuth').addEventListener('click', async () => {
+        const email = document.getElementById('authEmail').value;
+        const password = document.getElementById('authPassword').value;
+        if(!email || !password) return alert('กรุณากรอกข้อมูลให้ครบ');
+
+        if (isSignUpMode) {
+            const { error } = await _supabase.auth.signUp({ email, password });
+            if (error) return alert('สมัครล้มเหลว: ' + error.message);
+            alert('สมัครสำเร็จ! กรุณาเข้าสู่ระบบ');
+            window.location.reload();
+        } else {
+            const { error } = await _supabase.auth.signInWithPassword({ email, password });
+            if (error) return alert('เข้าสู่ระบบล้มเหลว: ' + error.message);
+            
+            // 💡 แก้บั๊กตรงนี้: บังคับให้วิ่งไปหน้า Welcome เสมอ!
+            window.location.href = 'welcome.html';
+        }
+    });
+</script>
+</body>
+</html>
